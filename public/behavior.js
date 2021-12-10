@@ -79,22 +79,19 @@ function loadModel(filename) {
 			if(child.name === 'dataobject') console.log(child.userData);
 		});
 
+		//object.rotateX(0.3);
 		scene.add(object);
 
-					// compute the box that contains all the stuff
-			// from root and below
-			const box = new Box3().setFromObject(object);
+		// compute the box that contains all the stuff
+		const box = new Box3().setFromObject(object);
+		const boxSize = box.getSize(new Vector3()).length();
+		const boxCenter = box.getCenter(new Vector3());
+		frameArea(boxSize * 0.5, boxSize, boxCenter, camera);
 
-			const boxSize = box.getSize(new Vector3()).length();
-			const boxCenter = box.getCenter(new Vector3());
-
-			// set the camera to frame the box
-			frameArea(boxSize * 0.5, boxSize, boxCenter, camera);
-
-			// update the Trackball controls to handle the new size
-			controls.maxDistance = boxSize * 10;
-			controls.target.copy(boxCenter);
-			controls.update();
+		// update the Trackball controls to handle the new size
+		controls.maxDistance = boxSize * 10;
+		controls.target.copy(boxCenter);
+		controls.update();
 
 		animate();
 	});

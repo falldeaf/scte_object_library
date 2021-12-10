@@ -45,25 +45,26 @@ console.log("Listening at http://localhost:" + port);
 async function getFirstLine(pathToFile) {
 	const readable = fs.createReadStream(pathToFile);
 	const reader = readline.createInterface({ input: readable });
-	//let count = 0;
-	//let metadata = "";
+	let count = 0;
+	let metadata = "";
 	const line = await new Promise((resolve) => {
 		reader.on('line', (line) => {
-			reader.close();
-			resolve(line);
-			/*count++;
+			//reader.close();
+			//resolve(line);
+			count++;
 			metadata += line;
 			if(count >= 2) {
 				resolve(metadata);
 				reader.close();
-			}*/
+			}
 		});
 	});
 	readable.close();
 
-	const regex = /JSON((.|\n)*)]}/gm;
-	const json = regex.exec(line);
-	const nodes = JSON.parse(json[1] + "]}").nodes;
+	//Fish out the json metadata
+	const regex = /JSON(.*),"buffers"/gm;
+	const json = regex.exec(metadata);
+	const nodes = JSON.parse(json[1] + "}").nodes;
 	for(let index in nodes) {
 		if(nodes[index].name === "dataobject") {
 			return nodes[index];
