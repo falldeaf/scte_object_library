@@ -2,13 +2,16 @@ import {
 	Camera,
 	DirectionalLight,
 	Color,
+	Mesh,
 	Material,
 	PointLight,
 	WebGLRenderer,
 	Scene,
 	PerspectiveCamera,
-	Texture,
+	TextureLoader,
+	EquirectangularReflectionMapping,
 	AmbientLight,
+	sRGBEncoding,
 	Box3,
 	Vector3,
 	MathUtils,
@@ -17,7 +20,8 @@ import { OrbitControls } from 'https://unpkg.com/three@0.120.1/examples/jsm/cont
 import { GLTFLoader } from 'https://unpkg.com/three@0.120.1/examples/jsm/loaders/GLTFLoader.js'
 import Fuse from 'https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.esm.js'
 
-let scene, camera, renderer, models, fuse, object, controls, active_filename;
+let viewport, scene, camera, renderer, models, fuse, object, controls, active_filename;
+let lights = [];
 
 async function init() {
 
@@ -29,8 +33,9 @@ async function init() {
 	camera.position.x = 8;
 	camera.position.y = 1;
 	camera.position.z = 10;
-	//camera.fov = 60;
-	//camera.updateProjectionMatrix();
+	camera.fov = 20;
+	camera.aspect = 800/600;
+	camera.updateProjectionMatrix();
 
 	const hlight = new AmbientLight (0x404040,12);
 	scene.add(hlight);
@@ -52,12 +57,21 @@ async function init() {
 	light4.position.set(-500,300,500);
 	scene.add(light4);
 
+	lights.push(directionalLight);
+	lights.push(light);
+	lights.push(light2);
+	lights.push(light3);
+	lights.push(light4);
+
 	renderer = new WebGLRenderer({antialias:true, alpha: true, preserveDrawingBuffer: true});
 	renderer.setSize(800,600);
-	document.getElementById('viewport').appendChild(renderer.domElement);
+	viewport = document.getElementById('viewport');
+	viewport.appendChild(renderer.domElement);
 
 	controls = new OrbitControls(camera, renderer.domElement);
-	// controls.addEventListener('change', renderer);
+
+	//controls.addEventListener('change', renderer);
+	//window.addEventListener( 'resize', onWindowResize );
 
 	document.getElementById("search").value = "";
 	const response = await fetch("models/");
@@ -79,6 +93,19 @@ function loadModel(filename) {
 			if(child.name === 'dataobject') console.log(child.userData);
 		});
 
+		const textureLoader = new TextureLoader();
+		let textureEquirec = textureLoader.load( 'environment.jpg' );
+		textureEquirec.mapping = EquirectangularReflectionMapping;
+		textureEquirec.encoding = sRGBEncoding;
+		//scene.background = textureEquirec;
+
+		object.traverse( function ( child ) {
+			if ( child instanceof Mesh ) {
+				child.material.envMap = textureEquirec;
+				// add any other properties you want here. check the docs.
+			}
+		});
+
 		//object.rotateX(0.3);
 		scene.add(object);
 
@@ -92,6 +119,7 @@ function loadModel(filename) {
 		controls.maxDistance = boxSize * 10;
 		controls.target.copy(boxCenter);
 		controls.update();
+		camera.updateProjectionMatrix();
 
 		animate();
 	});
@@ -157,7 +185,7 @@ function performSearch() {
 	}
 }
 
-document.getElementById("search").onchange = performSearch;
+document.getElementById("search").oninput = performSearch;
 
 document.getElementById("clear").onclick = function() {
 	document.getElementById("search").value = "";
@@ -167,6 +195,23 @@ document.getElementById("clear").onclick = function() {
 document.getElementById("save").onclick = function() {
 	saveImg(document.querySelector(".active").getAttribute("filename"));
 }
+
+document.getElementById("brightness").onchange = () => {
+	console.log(document.getElementById("brightness").value);
+	setBrightness(document.getElementById("brightness").value/10);
+};
+
+function setBrightness(brightness) {
+	lights.forEach((light, index) => {
+		light.intensity = brightness;
+	});
+}
+
+function setColor() {
+	const color_pick = document.getElementById('color-picker').value;
+	renderer.setClearColor( color_pick.slice(0, 7) , parseInt(color_pick.slice(7, 9), 16)/255);
+}
+window.setColor = setColor;
 
 function frameArea(sizeToFitOnScreen, boxSize, boxCenter, camera) {
 	const halfSizeToFitOnScreen = sizeToFitOnScreen * 0.8;
@@ -193,6 +238,14 @@ function frameArea(sizeToFitOnScreen, boxSize, boxCenter, camera) {
 	// point the camera to look at the center of the box
 	camera.lookAt(boxCenter.x, boxCenter.y, boxCenter.z);
 }
+
+function onWindowResize() {
+
+	camera.aspect = viewport.innerWidth / viewport.innerHeight;
+	camera.updateProjectionMatrix();
+	renderer.setSize( viewport.innerWidth, viewport.innerHeight );
+}
+
 
 function saveImg(filename) {
 	let imgData = renderer.domElement.toDataURL("image/png");
