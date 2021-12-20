@@ -23,18 +23,22 @@ import Fuse from 'https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.esm.js'
 let viewport, scene, camera, renderer, models, fuse, object, controls, active_filename;
 let lights = [];
 
+let image_width = 800;
+let image_height = 600;
+let css_viewport_border_width = 8;
+
 async function init() {
 
 	scene = new Scene();
 	//scene.background = new Color(0x333333);
 
-	camera = new PerspectiveCamera(40,window.innerWidth/window.innerHeight,1,5000);
+	camera = new PerspectiveCamera(40,image_width/image_height,1,5000);
 	camera.rotation.y = 45/180*Math.PI;
 	camera.position.x = 8;
 	camera.position.y = 1;
 	camera.position.z = 10;
 	camera.fov = 20;
-	camera.aspect = 800/600;
+	//camera.aspect = image_width/image_height;
 	camera.updateProjectionMatrix();
 
 	const hlight = new AmbientLight (0x404040,12);
@@ -190,6 +194,30 @@ document.getElementById("search").oninput = performSearch;
 document.getElementById("clear").onclick = function() {
 	document.getElementById("search").value = "";
 	performSearch();
+}
+
+document.getElementById("image-width").value = image_width;
+document.getElementById("image-height").value = image_height;
+
+document.getElementById("image-width").onchange = function() {
+	image_width = document.getElementById("image-width").value;
+	resetSize();
+}
+
+document.getElementById("image-height").onchange = function() {
+	image_height = document.getElementById("image-height").value;
+	resetSize();
+}
+
+function resetSize() {
+	let viewport_width = Number(image_width) + css_viewport_border_width * 2;
+	let viewport_height = Number(image_height) + css_viewport_border_width * 2;
+	console.log(viewport_height + "px");
+	document.getElementById("viewport").style.width = viewport_width + "px";
+	document.getElementById("viewport").style.height = viewport_height + "px";
+	renderer.setSize( image_width, image_height);
+	camera.aspect = image_width/image_height;
+	camera.updateProjectionMatrix();
 }
 
 document.getElementById("save").onclick = function() {

@@ -1,6 +1,9 @@
 #viewport {
 	margin:15px;
-	width:800px;
-	height:600px;
-	border:dashed 2px #000;
+	width:816px;
+	height:616px;
+	border: rgb(44, 44, 44) solid;
+	border-width: 8px;
+	border-radius: 5px;
+	background-image: url(alpha_pattern.png);
 }
