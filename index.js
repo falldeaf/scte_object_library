@@ -9,30 +9,41 @@ var app = express();
 const { promisify } = require('util');
 const stat = promisify(fs.stat);
 
-app.use(express.static('public'))
+app.use(express.static('public'));
+
+const filetypes = ['.glb', '.svg']
 
 app.use('/models/', async (req, res)=>{
-	var directory_path = path.join(__dirname, 'public');
+	var directory_path = path.join(__dirname, 'public/art');
 
 	const models = [];
 
 	const files = await fs.promises.readdir(directory_path);
 
 	for(const file in files) {
-		if(path.extname(files[file]) === '.glb') {
-			const model = {};
-			model.filename = files[file];
+		const model = {};
+		switch(path.extname(files[file])) {
+			case filetypes[0]: //.glb
+				model.filename = files[file];
+				model.type = 'glb';
+				model.icon = "cube"; //font awesome icon
+				metadata = glbMetadata(await getFileHeader(directory_path + "/" + files[file]));
+				break;
+			case filetypes[1]: //.svg
+				model.filename = files[file];
+				model.type = "svg";
+				model.icon = "image";
+				metadata = svgMetadata(await getFileHeader(directory_path + "/" + files[file]));
+				break;
+		}
 
-			const metadata = await getFirstLine(directory_path + "/" + files[file]);
+		if(filetypes.indexOf(path.extname(files[file])) >= 0) {
 			const stats = await stat(directory_path + "/" + files[file]);
-
-			//console.log(metadata);
-
 			model.title = metadata.extras.title;
 			model.description = metadata.extras.description;
 			model.author = metadata.extras.author;
 			model.size = stats.size;
-			model.date = stats.mtime;
+			model.date = stats.birthtime;
 			models.push(model);
 		}
 	}
@@ -42,7 +53,7 @@ app.use('/models/', async (req, res)=>{
 app.listen(port);
 console.log("Listening at http://localhost:" + port);
 
-async function getFirstLine(pathToFile) {
+async function getFileHeader(pathToFile) {
 	const readable = fs.createReadStream(pathToFile);
 	const reader = readline.createInterface({ input: readable });
 	let count = 0;
@@ -60,7 +71,10 @@ async function getFirstLine(pathToFile) {
 		});
 	});
 	readable.close();
+	return metadata;
+}
 
+function glbMetadata(metadata) {
 	//Fish out the json metadata
 	const regex = /JSON(.*),"buffers"/gm;
 	const json = regex.exec(metadata);
@@ -70,4 +84,12 @@ async function getFirstLine(pathToFile) {
 			return nodes[index];
 		}
 	}
+}
+
+function svgMetadata(metadata) {
+	//Fish out the svg metadata
+	const regex = /jsonmeta="(.*?)">/;
+	const json = regex.exec(metadata);
+	let nodes = JSON.parse(decodeURIComponent(json[1]));
+	return {extras: nodes};
 }

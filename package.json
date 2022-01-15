@@ -4,11 +4,12 @@
   "description": "Three.js based object libary",
   "main": "index.js",
   "scripts": {
-    "test": "echo "Error: no test specified" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Tom Mardis",
   "license": "ISC",
   "dependencies": {
+    "@svgdotjs/svg.js": "^3.1.1",
     "express": "^4.17.1"
   }
 }

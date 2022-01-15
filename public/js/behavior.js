@@ -1,3 +1,4 @@
+/*
 import {
 	Camera,
 	DirectionalLight,
@@ -19,10 +20,37 @@ import {
 import { OrbitControls } from 'https://unpkg.com/three@0.120.1/examples/jsm/controls/OrbitControls.js'
 import { GLTFLoader } from 'https://unpkg.com/three@0.120.1/examples/jsm/loaders/GLTFLoader.js'
 import Fuse from 'https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.esm.js'
+*/
+
+import {
+	Camera,
+	DirectionalLight,
+	Color,
+	Mesh,
+	Material,
+	PointLight,
+	WebGLRenderer,
+	Scene,
+	PerspectiveCamera,
+	TextureLoader,
+	EquirectangularReflectionMapping,
+	AmbientLight,
+	sRGBEncoding,
+	Box3,
+	Vector3,
+	MathUtils,
+} from '/js/three.module.js'
+import { OrbitControls } from '/js/OrbitControls.js'
+import { GLTFLoader } from '/js/GLTFLoader.js'
+import Fuse from '/js/fuse.esm.js'
+import { SVG } from '/js/svg.esm.js'
+//import svgPanZoom from '/js/svg-pan-zoom.js'
 
 let viewport, scene, camera, renderer, models, fuse, object, controls, active_filename;
 let lights = [];
 
+let image_type = "";
+let image_bgcolor = "#00000000";;
 let image_width = 800;
 let image_height = 600;
 let css_viewport_border_width = 8;
@@ -41,32 +69,6 @@ async function init() {
 	//camera.aspect = image_width/image_height;
 	camera.updateProjectionMatrix();
 
-	const hlight = new AmbientLight (0x404040,12);
-	scene.add(hlight);
-
-	const directionalLight = new DirectionalLight(0xffffff,1);
-	directionalLight.position.set(0,1,0);
-	directionalLight.castShadow = true;
-	scene.add(directionalLight);
-	const light = new PointLight(0xc4c4c4,1);
-	light.position.set(0,300,500);
-	scene.add(light);
-	const light2 = new PointLight(0xc4c4c4,1);
-	light2.position.set(500,100,0);
-	scene.add(light2);
-	const light3 = new PointLight(0xc4c4c4,1);
-	light3.position.set(0,100,-500);
-	scene.add(light3);
-	const light4 = new PointLight(0xc4c4c4,1);
-	light4.position.set(-500,300,500);
-	scene.add(light4);
-
-	lights.push(directionalLight);
-	lights.push(light);
-	lights.push(light2);
-	lights.push(light3);
-	lights.push(light4);
-
 	renderer = new WebGLRenderer({antialias:true, alpha: true, preserveDrawingBuffer: true});
 	renderer.setSize(800,600);
 	viewport = document.getElementById('viewport');
@@ -81,17 +83,47 @@ async function init() {
 	const response = await fetch("models/");
 	models = await response.json();
 	fuse = new Fuse(models, {keys: ['author', 'title', 'description', 'filename']});
-	active_filename = models[0].filename;
+	active_filename = "";
 	console.log(models);
 	renderList(models, false);
-	loadModel(active_filename);
+	//loadModel(active_filename);
+}
+init();
+
+function loadVector(filename) {
+	resetViewport();
+	active_filename = filename;
+	
+	/*
+	document.getElementById("viewport").innerHTML = `<object id="svg-object" data="art/${filename}" type="image/svg+xml"></object>`;
+	svgPanZoom('#svg-object', {
+		zoomEnabled: true,
+		controlIconsEnabled: true
+	});*/
+	
+	fetch('art/' + filename)
+	.then(r => r.text())
+	.then(text => {
+		document.getElementById("viewport").innerHTML = text;
+		document.querySelector("#viewport svg").id = "svg-object";
+		document.querySelector('#svg-object').style.width = image_width + "px";
+		document.querySelector('#svg-object').style.height = image_height + "px";
+		svgPanZoom('#svg-object', {
+			zoomEnabled: true,
+		});
+	})
+	.catch(console.error.bind(console));
 }
 
 function loadModel(filename) {
+	resetViewport();
+	viewport.appendChild(renderer.domElement)
 	active_filename = filename;
-	scene.remove(object);
+
+	addLights(scene);
+	//scene.remove(object);
 	let loader = new GLTFLoader();
-	loader.load(filename, async function(gltf){
+	loader.load("art/" + filename, async function(gltf){
 		object = gltf.scene;
 		object.children.forEach(function(child){
 			if(child.name === 'dataobject') console.log(child.userData);
@@ -129,11 +161,41 @@ function loadModel(filename) {
 	});
 }
 
+function addLights(scene) {
+	lights = [];
+
+	const hlight = new AmbientLight (0x404040,12);
+	scene.add(hlight);
+
+	const directionalLight = new DirectionalLight(0xffffff,1);
+	directionalLight.position.set(0,1,0);
+	directionalLight.castShadow = true;
+	scene.add(directionalLight);
+	const light = new PointLight(0xc4c4c4,1);
+	light.position.set(0,300,500);
+	scene.add(light);
+	const light2 = new PointLight(0xc4c4c4,1);
+	light2.position.set(500,100,0);
+	scene.add(light2);
+	const light3 = new PointLight(0xc4c4c4,1);
+	light3.position.set(0,100,-500);
+	scene.add(light3);
+	const light4 = new PointLight(0xc4c4c4,1);
+	light4.position.set(-500,300,500);
+	scene.add(light4);
+
+	lights.push(directionalLight);
+	lights.push(light);
+	lights.push(light2);
+	lights.push(light3);
+	lights.push(light4);
+}
+
 function animate() {
 	renderer.render(scene,camera);
 	requestAnimationFrame(animate);
 }
-init();
+
 
 async function renderList(models, search) {
 
@@ -151,9 +213,9 @@ async function renderList(models, search) {
 		const date = new Date(model.date).toLocaleDateString("en-US", {year: "numeric", month:"short", day:"2-digit"});
 
 		var elem = `
-			<a href="#" class="list-group-item list-group-item-action ${active}" aria-current="true" filename="${model.filename}">
+			<a href="#" class="list-group-item list-group-item-action ${active}" aria-current="true" filename="${model.filename}" type="${model.type}">
 				<div class="d-flex w-100 justify-content-between">
-					<h5 class="mb-1"><i class="fa fa-cube" aria-hidden="true"></i> ${model.title}</h5>
+					<h5 class="mb-1"><i class="fa fa-${model.icon}" aria-hidden="true"></i> ${model.title}</h5>
 					<small>${date}</small>
 				</div>
 				<p class="mb-1">${model.description}</p>
@@ -166,6 +228,7 @@ async function renderList(models, search) {
 
 	document.getElementById('list-group').innerHTML = list;
 
+	//manage active list group item
 	var model_links = document.querySelectorAll(".list-group-item");
 	for(var i =0; i < model_links.length; i++) {
 		model_links[i].onclick = function() {
@@ -173,7 +236,16 @@ async function renderList(models, search) {
 				console.log(this);
 				if(document.querySelector(".active")) document.querySelector(".active").classList.remove("active");
 				this.classList.add("active");
-				loadModel(this.getAttribute("filename"));
+				switch(this.getAttribute("type")) {
+					case "glb":
+						image_type = "glb";
+						loadModel(this.getAttribute("filename"));
+						break;
+					case "svg":
+						image_type = "svg";
+						loadVector(this.getAttribute("filename"));
+				}
+
 			}
 		}
 	}
@@ -215,9 +287,19 @@ function resetSize() {
 	console.log(viewport_height + "px");
 	document.getElementById("viewport").style.width = viewport_width + "px";
 	document.getElementById("viewport").style.height = viewport_height + "px";
-	renderer.setSize( image_width, image_height);
-	camera.aspect = image_width/image_height;
-	camera.updateProjectionMatrix();
+
+	switch(image_type) {
+		case "glb":
+			renderer.setSize( image_width, image_height);
+			camera.aspect = image_width/image_height;
+			camera.updateProjectionMatrix();
+			break;
+		case "svg":
+			document.querySelector('#svg-object').style.width = image_width + "px";
+			document.querySelector('#svg-object').style.height = image_height + "px";
+			break;
+	}
+
 }
 
 document.getElementById("save").onclick = function() {
@@ -237,7 +319,17 @@ function setBrightness(brightness) {
 
 function setColor() {
 	const color_pick = document.getElementById('color-picker').value;
-	renderer.setClearColor( color_pick.slice(0, 7) , parseInt(color_pick.slice(7, 9), 16)/255);
+	image_bgcolor = color_pick;
+	switch(image_type) {
+		case "glb":
+			renderer.setClearColor( color_pick.slice(0, 7) , parseInt(color_pick.slice(7, 9), 16)/255);
+			break;
+		case "svg":
+			console.log(color_pick);
+			document.querySelector('#svg-object').style.background = color_pick;
+			break;
+	}
+
 }
 window.setColor = setColor;
 
@@ -268,18 +360,84 @@ function frameArea(sizeToFitOnScreen, boxSize, boxCenter, camera) {
 }
 
 function onWindowResize() {
-
-	camera.aspect = viewport.innerWidth / viewport.innerHeight;
-	camera.updateProjectionMatrix();
-	renderer.setSize( viewport.innerWidth, viewport.innerHeight );
+	if(image_type === 'glb') {
+		camera.aspect = viewport.innerWidth / viewport.innerHeight;
+		camera.updateProjectionMatrix();
+		renderer.setSize( viewport.innerWidth, viewport.innerHeight );
+	}
 }
 
 
 function saveImg(filename) {
-	let imgData = renderer.domElement.toDataURL("image/png");
+	switch(image_type) {
+		case "glb":
+			let imgData = renderer.domElement.toDataURL("image/png");
 
-	var link = document.createElement("a");
-	link.download = filename.split(".")[0] + ".png";
-	link.href = imgData;
-	link.click();
+			var link = document.createElement("a");
+			link.download = filename.split(".")[0] + ".png";
+			link.href = imgData;
+			link.click();
+			break;
+		case "svg":
+			var xml = new XMLSerializer().serializeToString(document.querySelector('#svg-object'));
+			//const canvas = document.querySelector('#ctest');
+			const canvas = document.createElement('canvas');
+			const ctx = canvas.getContext('2d');
+			let v = canvg.Canvg.fromString(ctx, xml);
+			v.start();
+			var png_data = canvas.toDataURL("image/png");
+			
+			let img = document.createElement('img');
+			img.width = image_width;
+			img.height = image_height;
+			img.onload = function () {
+				ctx.beginPath();
+				ctx.rect(0, 0, image_width, image_height);
+				ctx.fillStyle = hexToRgba(image_bgcolor);
+				ctx.fill();
+				ctx.drawImage(img, 0, 0, image_width, image_height);
+				let data = canvas.toDataURL('image/png');
+				var link = document.createElement("a");
+				link.download = filename.split(".")[0] + ".png";
+				link.href = data;
+				link.click();
+			};
+			img.src = png_data;
+			break;
+	}
+
+}
+
+function resetViewport() {
+	clearScene(scene)
+	if(document.getElementById("svg-object")) delete document.getElementById("svg-object");
+	document.getElementById("viewport").innerHTML = "";
+}
+
+function clearScene(obj){
+	while(obj.children.length > 0){ 
+		clearScene(obj.children[0]);
+		obj.remove(obj.children[0]);
+	}
+	if(obj.geometry) obj.geometry.dispose();
+
+	if(obj.material) {
+		//in case of map, bumpMap, normalMap, envMap
+		Object.keys(obj.material).forEach(prop => {
+			if(!obj.material[prop]) return;
+			if(obj.material[prop] !== null && typeof obj.material[prop].dispose === 'function') obj.material[prop].dispose();
+		})
+		obj.material.dispose();
+	}
+}
+
+function hexToRgba(hex) {
+	console.log(hex);
+	var r = parseInt(hex.slice(1, 3), 16),
+		g = parseInt(hex.slice(3, 5), 16),
+		b = parseInt(hex.slice(5, 7), 16),
+		a = parseInt(hex.slice(7, 9), 16);
+	let rgba = `rgba(${r},${g},${b},${(a/255).toFixed(1)})`;
+	console.log(rgba);
+	return rgba;
 }
