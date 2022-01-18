@@ -166,8 +166,9 @@ document.getElementById("embed-height").onchange = function() {
 }
 
 document.getElementById("clipboard").onclick = function() {
-	console.log(document.querySelector("iframe").outerHTML.replace("&amp;", "&"));
-	navigator.clipboard.writeText(document.querySelector("iframe").outerHTML.replace("&amp;", "&"));
+	const embed_string = String(document.querySelector("iframe").outerHTML).replace(/&amp;/g, '&');
+	console.log(embed_string);
+	navigator.clipboard.writeText(embed_string);
 	let alert_div = document.querySelector('#alert-div')
 	alert_div.innerHTML = `<div class="alert alert-success alert-dismissible fade show" role="alert">
 							<strong>SUCCESS</strong> Embed copied to clipboard!
