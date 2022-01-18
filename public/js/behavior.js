@@ -1,27 +1,3 @@
-/*
-import {
-	Camera,
-	DirectionalLight,
-	Color,
-	Mesh,
-	Material,
-	PointLight,
-	WebGLRenderer,
-	Scene,
-	PerspectiveCamera,
-	TextureLoader,
-	EquirectangularReflectionMapping,
-	AmbientLight,
-	sRGBEncoding,
-	Box3,
-	Vector3,
-	MathUtils,
-} from 'https://unpkg.com/three@0.120.1/build/three.module.js'
-import { OrbitControls } from 'https://unpkg.com/three@0.120.1/examples/jsm/controls/OrbitControls.js'
-import { GLTFLoader } from 'https://unpkg.com/three@0.120.1/examples/jsm/loaders/GLTFLoader.js'
-import Fuse from 'https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.esm.js'
-*/
-
 import {
 	Camera,
 	DirectionalLight,
@@ -50,7 +26,7 @@ let viewport, scene, camera, renderer, models, fuse, object, controls, active_fi
 let lights = [];
 
 let image_type = "";
-let image_bgcolor = "#00000000";;
+let image_bgcolor = "#00000000";
 let image_width = 800;
 let image_height = 600;
 let css_viewport_border_width = 8;
@@ -72,7 +48,7 @@ async function init() {
 	renderer = new WebGLRenderer({antialias:true, alpha: true, preserveDrawingBuffer: true});
 	renderer.setSize(800,600);
 	viewport = document.getElementById('viewport');
-	viewport.appendChild(renderer.domElement);
+	//viewport.appendChild(renderer.domElement);
 
 	controls = new OrbitControls(camera, renderer.domElement);
 
@@ -118,6 +94,7 @@ function loadVector(filename) {
 function loadModel(filename) {
 	resetViewport();
 	viewport.appendChild(renderer.domElement)
+	viewport.appendChild(embed_button());
 	active_filename = filename;
 
 	addLights(scene);
@@ -159,6 +136,57 @@ function loadModel(filename) {
 
 		animate();
 	});
+}
+
+//Embed Modal stuff
+function embed_button() {
+	let button = document.createElement('button');
+	button.setAttribute("data-bs-toggle", "modal"); 
+	button.setAttribute("data-bs-target", "#embed-modal")
+	button.id = 'embed-button';
+	button.innerHTML = '<i class="fa fa-anchor" aria-hidden="true"></i>';
+
+	return button;
+}
+
+document.querySelector('#embed-modal').addEventListener('shown.bs.modal', function () {
+	document.querySelector('#alert-div').innerHTML = "";
+	document.querySelector('#embed-iframe').innerHTML = "";
+	document.querySelector('#embed-iframe').appendChild(createEmbed(350, 300, 'spin'));
+})
+
+document.getElementById("embed-width").onchange = function() {
+	document.querySelector('#embed-iframe').innerHTML = "";
+	document.querySelector('#embed-iframe').appendChild(createEmbed(document.getElementById("embed-width").value, document.getElementById("embed-height").value, 'spin'));
+}
+
+document.getElementById("embed-height").onchange = function() {
+	document.querySelector('#embed-iframe').innerHTML = "";
+	document.querySelector('#embed-iframe').appendChild(createEmbed(document.getElementById("embed-width").value, document.getElementById("embed-height").value, 'spin'));
+}
+
+document.getElementById("clipboard").onclick = function() {
+	console.log(document.querySelector("iframe").outerHTML.replace("&amp;", "&"));
+	navigator.clipboard.writeText(document.querySelector("iframe").outerHTML.replace("&amp;", "&"));
+	let alert_div = document.querySelector('#alert-div')
+	alert_div.innerHTML = `<div class="alert alert-success alert-dismissible fade show" role="alert">
+							<strong>SUCCESS</strong> Embed copied to clipboard!
+							<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+							</div>`;
+	document.querySelector('.modal-body').prepend(alert_div);
+}
+
+function createEmbed(width, height, behavior) {
+	document.getElementById('embed-width').value = width;
+	document.getElementById('embed-height').value = height;
+	//<iframe scrolling="no" width="350" height="300" src="http://localhost:3000/embed.html?filename=3_16_screwdriver.glb&width=350&height=300&color=#FFFF0011&behavior=spin"></iframe>
+	let iframe = document.createElement('iframe');
+	iframe.width = width;
+	iframe.height = height;
+	iframe.scrolling = 'no';
+	iframe.frameBorder = "0";
+	iframe.src = `http://localhost:3000/embed.html?filename=${active_filename}&width=${width}&height=${height}&color=${image_bgcolor}&behavior=${behavior}`;
+	return iframe;
 }
 
 function addLights(scene) {

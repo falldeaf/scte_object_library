@@ -17,6 +17,8 @@
 	<link rel="icon" type="image/png" href="favicon.png">
 	<link href="/css/bootstrap-night.min.css" rel="stylesheet" media="(prefers-color-scheme: dark)">
 	<link href="/css/bootstrap.min.css" rel="stylesheet" media="(prefers-color-scheme: light)">
+
+	<script src="/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
 	<script src="/js/jscolor.min.js"></script>
 	
 	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.13.0/css/all.css">
@@ -79,7 +81,7 @@
 
 
 							<div class="mb-3">
-								<label for="colorpicker" class="form-label">Image size (pixels)</label>
+								<label for="image-size" class="form-label">Image size (pixels)</label>
 								<div class="input-group">
 									<span class="input-group-text" id="basic-addon1"><i class="fa fa-crop" aria-hidden="true"></i></span>
 									<span class="input-group-text" id="basic-addon1">Width</span>
@@ -97,17 +99,49 @@
 						</div>
 					</div>
 
-
-
 				</div>
 			</div>
 		</div>
 
-		<!--<canvas id="ctest"></canvas>-->
+		<div id="embed-modal" class="modal" tabindex="-1">
+			<div class="modal-dialog">
+			<div class="modal-content">
+				<div class="modal-header">
+				<h5 class="modal-title">3D Model Embed</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body">
+					<div id="alert-div"></div>
+
+					<div id="embed-iframe"></div>
+
+					<div class="mb-3">
+						<label for="embed-size" class="form-label">Embed size (pixels)</label>
+						<div class="input-group">
+							<span class="input-group-text" id="basic-addon1"><i class="fa fa-crop" aria-hidden="true"></i></span>
+							<span class="input-group-text" id="basic-addon1">Width</span>
+							<input id="embed-width" type="text" aria-label="Image Width" class="form-control" placeholder="width" value="800">
+							<span class="input-group-text" id="basic-addon1">Height</span>
+							<input id="embed-height" type="text" aria-label="Image Height" class="form-control" placeholder="height" value="600">
+						</div>
+					</div>
+
+					<div class="mb-3 text-right">
+						<label for="clipboard" class="form-label">Copy the iframe/html code to your Clipboard</label>
+						<button id="clipboard" type="button" class="btn btn-primary form-control"> <i class="fas fa-clipboard"></i> Copy to Clipboard </button>
+					</div>
+				</div>
+				<div class="modal-footer">
+				<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">OK</button>
+				</div>
+			</div>
+			</div>
+		</div>
+		
 	</main>
 	<script>
 		jscolor.presets.default = {
-			value: '#00AEEFFF',
+			value: '#00AEEF00',
 			position: 'top',
 			backgroundColor: '#333',
 			palette: '#00AEEFFF #55BAE1FF #14477DFF #B6D8E9FF #B3C935FF #F17A28FF #53575A #FFFFFFFF #00000000',

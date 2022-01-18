@@ -7,3 +7,25 @@
 	border-radius: 5px;
 	background-image: url(alpha_pattern.png);
 }
+
+.modal-body {
+	text-align: center;
+}
+
+iframe {
+	border:solid 1px #000;
+}
+
+#embed-button {
+	position: relative;
+	bottom: 55px;
+	right: -8px;
+	background-color: #468ac691;
+	height: 40px;
+	width: 40px;
+	border-radius: 25px;
+	cursor: pointer;
+	text-align: center;
+	vertical-align: bottom;
+	font-size: 25px;
+}
