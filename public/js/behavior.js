@@ -149,20 +149,17 @@ function embed_button() {
 	return button;
 }
 
-document.querySelector('#embed-modal').addEventListener('shown.bs.modal', function () {
+document.querySelector('#embed-modal').addEventListener('shown.bs.modal', function () { resetIframe(); })
+document.getElementById("embed-width").onchange = function() { resetIframe(); }
+document.getElementById("embed-height").onchange = function() { resetIframe(); }
+document.getElementById("overlay-bool").onchange = function() { resetIframe(); }
+document.getElementById("behavior-type").onchange = function() { resetIframe(); }
+
+function resetIframe() {
 	document.querySelector('#alert-div').innerHTML = "";
 	document.querySelector('#embed-iframe').innerHTML = "";
-	document.querySelector('#embed-iframe').appendChild(createEmbed(350, 300, 'spin'));
-})
-
-document.getElementById("embed-width").onchange = function() {
-	document.querySelector('#embed-iframe').innerHTML = "";
-	document.querySelector('#embed-iframe').appendChild(createEmbed(document.getElementById("embed-width").value, document.getElementById("embed-height").value, 'spin'));
-}
-
-document.getElementById("embed-height").onchange = function() {
-	document.querySelector('#embed-iframe').innerHTML = "";
-	document.querySelector('#embed-iframe').appendChild(createEmbed(document.getElementById("embed-width").value, document.getElementById("embed-height").value, 'spin'));
+	document.querySelector('#embed-iframe').appendChild(createEmbed(document.getElementById("embed-width").value, document.getElementById("embed-height").value, document.querySelector('#behavior-type').value, document.querySelector('#overlay-bool').checked));
+	console.log(`behavior-type: ${document.querySelector('#behavior-type').value}, overlay-type: ${document.querySelector('#overlay-bool').checked}`);
 }
 
 document.getElementById("clipboard").onclick = function() {
@@ -177,7 +174,7 @@ document.getElementById("clipboard").onclick = function() {
 	document.querySelector('.modal-body').prepend(alert_div);
 }
 
-function createEmbed(width, height, behavior) {
+function createEmbed(width, height, behavior, overlay) {
 	document.getElementById('embed-width').value = width;
 	document.getElementById('embed-height').value = height;
 	//<iframe scrolling="no" width="350" height="300" src="http://localhost:3000/embed.html?filename=3_16_screwdriver.glb&width=350&height=300&color=#FFFF0011&behavior=spin"></iframe>
@@ -186,7 +183,7 @@ function createEmbed(width, height, behavior) {
 	iframe.height = height;
 	iframe.scrolling = 'no';
 	iframe.frameBorder = "0";
-	iframe.src = `http://localhost:3000/embed.html?filename=${active_filename}&width=${width}&height=${height}&color=${image_bgcolor}&behavior=${behavior}`;
+	iframe.src = `http://localhost:3000/embed.html?filename=${active_filename}&width=${width}&height=${height}&color=${image_bgcolor}&behavior=${behavior}&overlay=${overlay}`;
 	return iframe;
 }
 

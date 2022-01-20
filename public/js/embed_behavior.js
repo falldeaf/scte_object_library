@@ -18,17 +18,15 @@ import {
 } from '/js/three.module.js'
 import { OrbitControls } from '/js/OrbitControls.js'
 import { GLTFLoader } from '/js/GLTFLoader.js'
-import Fuse from '/js/fuse.esm.js'
-import { SVG } from '/js/svg.esm.js'
-//import svgPanZoom from '/js/svg-pan-zoom.js'
 
-let viewport, scene, camera, renderer, object, controls, behavior, image_width, image_height;
+let viewport, scene, camera, renderer, object, controls, behavior, overlay, image_width, image_height, metadata;
 
 async function init() {
 	const url_vars = getUrlVars();
 	const filename = url_vars["filename"];
 	const color = url_vars["color"];
 	behavior = url_vars["behavior"];
+	overlay = url_vars["overlay"];
 	image_width = parseInt(url_vars["width"]) || 800;
 	image_height = parseInt(url_vars["height"]) || 600;
 
@@ -72,7 +70,7 @@ async function init() {
 	viewport = document.getElementById('viewport');
 	viewport.appendChild(renderer.domElement);
 	controls = new OrbitControls(camera, renderer.domElement);
-	if(behavior == 'spin') controls.autoRotate = true;
+	if(behavior == 1) controls.autoRotate = true;
 	controls.addEventListener('start', ()=> { controls.autoRotate = false; } );
 	renderer.setClearColor( color.slice(0, 7) , parseInt(color.slice(7, 9), 16)/255);
 	loadModel(filename);
@@ -84,7 +82,11 @@ function loadModel(filename) {
 	loader.load("art/" + filename, async function(gltf){
 		object = gltf.scene;
 		object.children.forEach(function(child){
-			if(child.name === 'dataobject') console.log(child.userData);
+			if(child.name === 'dataobject') {
+				console.log(child.userData);
+				metadata = child.userData;
+				if(overlay == "true") createOverlay(metadata.title);
+			}
 		});
 
 		const textureLoader = new TextureLoader();
@@ -122,6 +124,13 @@ function animate() {
 	controls.update();
 	renderer.render(scene,camera);
 	requestAnimationFrame(animate);
+}
+
+function createOverlay(innerhtml) {
+	let overlay = document.createElement('div');
+	overlay.id = 'overlay';
+	overlay.innerHTML = innerhtml;
+	document.querySelector('#viewport').appendChild(overlay);
 }
 
 function resetSize() {
